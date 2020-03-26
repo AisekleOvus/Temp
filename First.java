@@ -1,9 +1,10 @@
 //package flashcards;
-import java.util.Scanner;
-import java.util.Map;
-import java.util.LinkedHashMap;
+import java.io.File;
 import java.util.Formatter;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Random;
+import java.util.Scanner;
 
 public class First {
     private static LinkedHashMap<String,String> cards = new LinkedHashMap<>();
@@ -14,6 +15,8 @@ public class First {
             System.out.println("Input the action (add, remove, import, export, ask, exit):");
 		    String action = scnr.next();
 		    if( action.toLowerCase().equals("add")) Add();
+			if( action.toLowerCase().equals("remove")) Remove();
+			if( action.toLowerCase().equals("import")) Import();
 		    if( action.toLowerCase().equals("ask")) Ask();
 		    if( action.toLowerCase().equals("exit")) {
 			    System.out.println("Bye bye!");
@@ -22,6 +25,28 @@ public class First {
 			System.out.println();
 		}
     }
+	private static void Import() {
+		String term = "";
+		String definition = "";
+	    System.out.println("File name:");
+		Scanner sc = new Scanner(scnr.next());
+		while(true) {
+ 			if(sc.hasNextLine()) term = sc.nextLine();
+			if(sc.hasNextLine()) definition = sc.nextLine();
+			else break;
+		    cards.putIfAbsent(term, definition);
+			cards.replace(term, definition);
+		}
+		
+	}
+	private static void Remove() {
+	    System.out.println("The card:");
+		String card = scnr.next();
+		if(cards.remove(card) != null)
+			System.out.println("The card has been removed.");
+		else
+			System.out.println("Can't remove \""+card+"\": there is no such card.");
+	}
 	
     private static boolean Ask() {
 		System.out.println("How many times to ask?");
@@ -41,7 +66,6 @@ public class First {
 
 			System.out.println("Print the definition of \""+card+"\":");
             answer = scnr.next();
-			System.out.println("ANSWER WAS : "+answer);
 			if(definition.toLowerCase().equals(answer.toLowerCase())) 
 				System.out.println("Correct answer.");
 			else
