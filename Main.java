@@ -75,6 +75,7 @@ class AppendableSerialization {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BufferedOutputStream bos = new BufferedOutputStream(baos);
         ObjectOutputStream oos = new ObjectOutputStream(bos);
+//		System.out.println("ObjectWriting :\n"+object);
         oos.writeObject(object);
         oos.flush();
         oos.close();
@@ -126,7 +127,7 @@ class StringUtil {
 }
 
 class Block implements Serializable {
-    private Integer id;
+    private int id;
     private String minerId;
     private Long startTimeStamp;
     private Integer magicNumber;
@@ -138,7 +139,7 @@ class Block implements Serializable {
     private String difficultyChange;
     private long serialVersionUID;
 
-    public Block(String minerId, Integer id, Integer magicNumber, String lastHash,  String currHash, long startTimeStamp,
+    public Block(String minerId, int id, Integer magicNumber, String lastHash,  String currHash, long startTimeStamp,
                  Integer difficulty, long serialVersionUID) {
 
         this.id = id;
@@ -165,7 +166,7 @@ class Block implements Serializable {
         return  String.format("\nBlock:\nCreated by miner %s\nId: %d\nTimestamp: %d\nMagic number: %d\nHash of the previous block:\n%s\nHash of the block:"+"\n%s\nBlock was generating for %d seconds\nN %s", minerId, id, startTimeStamp, magicNumber,lastHash,hash, creationTime, difficultyChange);
     }
 
-    public Integer getId() { return id; }
+    public int getId() { return id; }
 
     public Long getTimeStamp() { return startTimeStamp; }
 
@@ -225,6 +226,11 @@ class BlockChain {
         } catch (Exception e) {
             e.printStackTrace();
         }
+		if(block != null) {
+		    difficulty = block.getDifficulty();
+			difficultyCheck = getDifficultyCheckString(difficulty);
+		}
+		System.out.println("difficulty now is "+difficulty);
         return block;
 
     }
@@ -315,7 +321,7 @@ class Miner implements Runnable {
     @Override
     public void run(){
 //        while(true) {
-        for(int i = 0; i<5; i++) {
+        for(int i = 0; i<3; i++) {
             if(bc.engageNewBlock(mintBlock()))
                 getConditions();
         }
@@ -324,6 +330,8 @@ class Miner implements Runnable {
     private Block mintBlock() {
         long startTimeStamp = new Date().getTime();
         Integer magicNumber = null;
+		int i = 0;
+		System.out.println("difficulty : "+difficulty+" difficultyCheck : "+difficultyCheck);
         while(true) {
             magicNumber = new Random().nextInt();
             newHash = StringUtil.applySha256(new StringBuilder()
