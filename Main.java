@@ -198,7 +198,7 @@ class BlockChain {
             lastBlock = checkBlockChain();
             this.isValid = lastBlock != null;
         }else {
-            lastBlock = new Block("", 0, 0, "0", "", new Date().getTime(), 0,serialVersionUID);
+            lastBlock = new Block("", 0, 0, "0", "0", new Date().getTime(), 0,serialVersionUID);
         }
     }
     private String getDifficultyCheckString(int difficulty) {
@@ -235,7 +235,8 @@ class BlockChain {
 
     }
 
-    public boolean engageNewBlock(Block offeredBlock) {
+    public synchronized boolean engageNewBlock(Block offeredBlock) {
+//        System.out.println(Thread.currentThread().getName());
         if(lastBlock.getId()+1 == offeredBlock.getId()) {
             String hash = StringUtil.applySha256(offeredBlock);
             if (hash.equals(offeredBlock.getHash())) {
@@ -257,7 +258,11 @@ class BlockChain {
         difficultyCheck = getDifficultyCheckString(difficulty);
         return true;
     }
-    public void getBlockchainState() {
+    /**
+     *
+     * @param number - points on how much Blocks to show
+    */
+    public void getBlockchainState(int number) {
         if(new File(blockChainName).exists()) {
         try (FileInputStream fis = new FileInputStream(blockChainName)) {
             BufferedInputStream bis = new BufferedInputStream(fis);
@@ -317,11 +322,15 @@ class Miner implements Runnable {
         this.difficultyCheck = bc.getDifficultyCheck();
         this.newBlockId = lastBlock.getId()+1;        
         this.lastHash = lastBlock.getHash();
+        System.out.println("Thread "+Thread.currentThread().getName()+" : ");
+        System.out.println("Last Block : \n" + bc.getLastBlock()+"\n");
+;
+
     }
     @Override
     public void run(){
 //        while(true) {
-        for(int i = 0; i<3; i++) {
+        for(int i = 0; i<6; i++) {
             if(bc.engageNewBlock(mintBlock()))
                 getConditions();
         }
@@ -331,7 +340,7 @@ class Miner implements Runnable {
         long startTimeStamp = new Date().getTime();
         Integer magicNumber = null;
 		int i = 0;
-		System.out.println("difficulty : "+difficulty+" difficultyCheck : "+difficultyCheck);
+//		System.out.println("difficulty : "+difficulty+" difficultyCheck : "+difficultyCheck);
         while(true) {
             magicNumber = new Random().nextInt();
             newHash = StringUtil.applySha256(new StringBuilder()
@@ -354,14 +363,16 @@ public class Main {
     public static void main(String[] args) throws Exception {
         BlockChain bc = BlockChain.getInstance();
         Thread th1 = new Thread(new Miner(bc, "#1"));
-/*        Thread th2 = new Thread(new Miner(bc, "#2"));
-        Thread th3 = new Thread(new Miner(bc,"#3"));
-*/
+        Thread th2 = new Thread(new Miner(bc, "#2"));
+        Thread th3 = new Thread(new Miner(bc, "#3"));
+
         th1.start();
-/*        th2.start();
-        th3.start();*/
+        th2.start();
+        th3.start();
         th1.join();
-        bc.getBlockchainState();
+        th2.join();
+        th3.join();
+//        bc.getBlockchainState(5);
     }
 }
 
