@@ -322,17 +322,17 @@ class Miner implements Runnable {
         this.difficultyCheck = bc.getDifficultyCheck();
         this.newBlockId = lastBlock.getId()+1;        
         this.lastHash = lastBlock.getHash();
-        System.out.println("Thread "+Thread.currentThread().getName()+" : ");
-        System.out.println("Last Block : \n" + bc.getLastBlock()+"\n");
-;
-
     }
     @Override
     public void run(){
 //        while(true) {
-        for(int i = 0; i<6; i++) {
-            if(bc.engageNewBlock(mintBlock()))
+        for(int i = 0; i<3; i++) {
+            if(bc.engageNewBlock(mintBlock())) {
                 getConditions();
+                System.out.println(Thread.currentThread().getName()+" mint block success ");
+            }else {
+                System.out.println(Thread.currentThread().getName()+" mint block was not success ");
+            }
         }
     }
 
