@@ -1,4 +1,4 @@
-import java.io.*;
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.util.Date;
 import java.util.Random;
@@ -75,7 +75,6 @@ class AppendableSerialization {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BufferedOutputStream bos = new BufferedOutputStream(baos);
         ObjectOutputStream oos = new ObjectOutputStream(bos);
-//		System.out.println("ObjectWriting :\n"+object);
         oos.writeObject(object);
         oos.flush();
         oos.close();
@@ -150,7 +149,7 @@ class Block implements Serializable {
         creationTime = (finishTimeStamp - startTimeStamp)/1000;
         // calculate difficulty for the next block
         this.difficultyOld = difficulty;
-        if(creationTime < 15) this.difficulty++;
+        if(creationTime < 15 && difficulty < 4) this.difficulty++;
         if(creationTime > 15 && this.difficulty > 0) this.difficulty--;
 
         difficultyChange = this.difficultyOld < this.difficulty ? "was increased to " + this.difficulty
@@ -188,6 +187,7 @@ class BlockChain {
     private String difficultyCheck;
     private String blockChainName;
     private boolean isValid;
+//    private volatile boolean inUse; // This variable is for ridding of latecomers
     private final  static long serialVersionUID = 9871236498172387L;
 
     private BlockChain() {
@@ -235,9 +235,10 @@ class BlockChain {
 
     }
 
-    public synchronized boolean engageNewBlock(Block offeredBlock) {
-//        System.out.println(Thread.currentThread().getName());
+    public /*synchronized*/ boolean engageNewBlock(Block offeredBlock) {
+//        if(inUse) return false;
         if(lastBlock.getId()+1 == offeredBlock.getId()) {
+//            inUse = true;
             String hash = StringUtil.applySha256(offeredBlock);
             if (hash.equals(offeredBlock.getHash())) {
                 return saveBlockchainState(offeredBlock);
@@ -245,7 +246,7 @@ class BlockChain {
         }
         return false;
     }
-    private boolean saveBlockchainState(Block block) {
+    private synchronized boolean saveBlockchainState(Block block) {
         AppendableSerialization as = new AppendableSerialization(blockChainName, block);
         try {
             as.appendableObjectWriting();
@@ -256,6 +257,7 @@ class BlockChain {
         lastBlock = block;
         difficulty = lastBlock.getDifficulty();
         difficultyCheck = getDifficultyCheckString(difficulty);
+//        inUse = false;
         return true;
     }
     /**
@@ -326,13 +328,12 @@ class Miner implements Runnable {
     @Override
     public void run(){
 //        while(true) {
-        for(int i = 0; i<3; i++) {
-            if(bc.engageNewBlock(mintBlock())) {
-                getConditions();
+        for(int i = 0; i<100; i++) {
+            if(bc.engageNewBlock(mintBlock()))
                 System.out.println(Thread.currentThread().getName()+" mint block success ");
-            }else {
+            else
                 System.out.println(Thread.currentThread().getName()+" mint block was not success ");
-            }
+            getConditions();
         }
     }
 
@@ -340,7 +341,6 @@ class Miner implements Runnable {
         long startTimeStamp = new Date().getTime();
         Integer magicNumber = null;
 		int i = 0;
-//		System.out.println("difficulty : "+difficulty+" difficultyCheck : "+difficultyCheck);
         while(true) {
             magicNumber = new Random().nextInt();
             newHash = StringUtil.applySha256(new StringBuilder()
@@ -369,9 +369,6 @@ public class Main {
         th1.start();
         th2.start();
         th3.start();
-        th1.join();
-        th2.join();
-        th3.join();
 //        bc.getBlockchainState(5);
     }
 }
